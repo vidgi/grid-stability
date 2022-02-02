@@ -343,6 +343,3 @@ except:
       run_model(X_training, y_training, X_testing, y_testing, selected_model, selected_folds, selected_epochs)
   else:
       st.write('Currently, there is no model trained with the selected parameters.')
-
-
-# button OR results

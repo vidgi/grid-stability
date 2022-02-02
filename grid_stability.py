@@ -222,18 +222,23 @@ def run_model(X_training, y_training, X_testing, y_testing, selected_model, sele
 
     st.success('Finished building and evaluating model!')
     st.balloons()
-    view_results(name_string, y_testing,)
 
-def view_results(name_string, y_testing):
+    view_results(name_string, y_testing, selected_model, selected_folds, selected_epochs)
+
+def view_results(name_string, y_testing, selected_model, selected_folds, selected_epochs):
     # model_string = name_string+".h5"
     # # load model
     # model = load_model(model_string)
     # # summarize model.
     # model.summary()
 
+    st.subheader('Selected Model Results')
+    st.write('Model Architecture: ' + str(selected_model))
+    st.write('Fold Count: ' + str(selected_folds))
+    st.write('Epoch Count: ' + str(selected_epochs))
+
     csv_string = name_string+".csv"
     cm = pd.read_csv(csv_string,index_col=0)
-    st.subheader('Model Training and Results')
     st.write(cm)
     accuracy = (cm.iloc[0, 0] + cm.iloc[1, 1]) / len(y_testing) * 100
     st.write('Accuracy per the confusion matrix:')
@@ -283,6 +288,8 @@ assessment(data, 'stab', selected_feature, -1)
 ratio_training = y_training['stabf'].value_counts(normalize=True)
 ratio_testing = y_testing['stabf'].value_counts(normalize=True)
 
+st.header('Building and Training Deep Learning Model')
+
 st.subheader('Splitting Data into Test/Train and Feature Scaling')
 st.write("As anticipated, the features dataset will contain all 12 original predictive features, while the label dataset will contain only 'stabf' ('stab' is dropped here).")
 st.write("In addition, as the dataset has already been shuffled, the training set will receive the first 54,000 observations, while the testing set will accommodate the last 6,000.")
@@ -324,7 +331,7 @@ try:
     csv_string = name_string+'.csv'
     cm = pd.read_csv(csv_string,index_col=0)
     st.write('Model already trained with the selected parameters. Results displayed below.')
-    view_results(name_string,y_testing)
+    view_results(name_string, y_testing, selected_model, selected_folds, selected_epochs)
 except:
   col1, col2, col3 , col4, col5 = st.columns(5)
 
@@ -343,3 +350,30 @@ except:
       run_model(X_training, y_training, X_testing, y_testing, selected_model, selected_folds, selected_epochs)
   else:
       st.write('Currently, there is no model trained with the selected parameters.')
+
+st.header('Final Results')
+
+labels = ['5 f, 10 e', '5 f, 30 e', '5 f, 50 e', '10 f, 10 e', '10 f, 30 e', '10 f, 50 e']
+men_means = [95.66666666666667, 97.11666666666666, 97.25, 96.91666666666666, 97.21666666666667, 97.36666666666667]
+women_means = [97.01666666666667, 97.45, 97.83333333333334, 97.91666666666666, 98.08333333333333, 97.88333333333334]
+
+x = np.arange(len(labels))  # the label locations
+width = 0.3  # the width of the bars
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x - width/2, men_means, width, label='24-12-1')
+rects2 = ax.bar(x + width/2, women_means, width, label='24-24-12-1')
+
+# Add some text for labels, title and custom x-axis tick labels, etc.
+ax.set_ylabel('Accuracy Scores (%)')
+ax.set_title('Accuracy Scores by Model Architecture and Parameters')
+ax.set_xticks(x, labels)
+ax.legend(loc='lower right')
+
+ax.bar_label(rects1, padding=3, fmt='%.2f', fontsize=6)
+ax.bar_label(rects2, padding=3, fmt='%.2f', fontsize=6)
+ax.set_ylim(top=110)
+
+fig.tight_layout()
+
+st.pyplot(plt)

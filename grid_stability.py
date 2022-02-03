@@ -78,19 +78,6 @@ if st.checkbox('Show raw data'):
     st.subheader('Shuffled dataframe')
     st.write(data)
 
-
-
-# st.subheader('Number of pickups by hour')
-# hist_values = np.histogram(data[DATE_COLUMN].dt.hour, bins=24, range=(0,24))[0]
-# st.bar_chart(hist_values)
-#
-# # Some number in the range 0-23
-# hour_to_filter = st.slider('hour', 0, 23, 17)
-# filtered_data = data[data[DATE_COLUMN].dt.hour == hour_to_filter]
-#
-# st.subheader('Map of all pickups at %s:00' % hour_to_filter)
-# st.map(filtered_data)
-
 def assessment(f_data, f_y_feature, f_x_feature, f_index=-1):
     """
     Develops and displays a histogram and a scatter plot for a dependent / independent variable pair from
@@ -268,22 +255,22 @@ selected_feature = st.radio(
 
 assessment(data, 'stab', selected_feature, -1)
 
-
-
 #how data was split into test in train
-# X = data.iloc[:, :12]
-# y = data.iloc[:, 13]
-#
-# X_training = X.iloc[:54000, :]
-# y_training = y.iloc[:54000]
-#
-# X_testing = X.iloc[54000:, :]
-# y_testing = y.iloc[54000:]
 
-# X_training.to_csv('X_training.csv')
-# y_training.to_csv('y_training.csv')
-# X_testing.to_csv('X_testing.csv')
-# y_testing.to_csv('y_testing.csv')
+def splittesttrain(data):
+    X = data.iloc[:, :12]
+    y = data.iloc[:, 13]
+
+    X_training = X.iloc[:54000, :]
+    y_training = y.iloc[:54000]
+
+    X_testing = X.iloc[54000:, :]
+    y_testing = y.iloc[54000:]
+
+    X_training.to_csv('X_training.csv')
+    y_training.to_csv('y_training.csv')
+    X_testing.to_csv('X_testing.csv')
+    y_testing.to_csv('y_testing.csv')
 
 ratio_training = y_training['stabf'].value_counts(normalize=True)
 ratio_testing = y_testing['stabf'].value_counts(normalize=True)

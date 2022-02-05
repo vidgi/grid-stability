@@ -18,11 +18,13 @@ from keras.layers import Dense
 
 from datetime import datetime
 
-st.set_page_config(page_title="Predicting Smart Grid Stability with Deep Learning", page_icon=":zap:", layout="centered", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title="Predicting Grid Stability with Deep Learning", page_icon=":zap:", layout="centered", initial_sidebar_state="auto", menu_items=None)
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;justify-content: center;} </style>', unsafe_allow_html=True)
 
-st.sidebar.title('Predicting Smart Grid Stability with Deep Learning')
+st.sidebar.title('Predicting Grid Stability with Deep Learning')
 st.sidebar.write("Source: [Paolo Breviglieri](https://www.kaggle.com/pcbreviglieri/predicting-smart-grid-stability-with-deep-learning/notebook)")
+
+st.sidebar.write("In this exercise, I have adapted Paolo's work into this streamlit app to allow for more model interactivity and testing.")
 
 st.sidebar.header('Problem Statement')
 st.sidebar.write('(explain what the project is about)')
@@ -35,9 +37,6 @@ def load_data():
     sns.set()
     start_time = datetime.now()
     data = pd.read_csv(DATA_URL)
-    # lowercase = lambda x: str(x).lower()
-    # data.rename(lowercase, axis='columns', inplace=True)
-    # data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
 
     map1 = {'unstable': 0, 'stable': 1}
     data['stabf'] = data['stabf'].replace(map1)
@@ -55,47 +54,31 @@ data_load_state = st.text('Loading data...')
 data, X_training, y_training, X_testing, y_testing = load_data()
 data_load_state.text("Dataset successfully loaded!")
 
-st.write('The dataset chosen for this machine learning exercise has a synthetic nature and contains results from simulations of grid stability for a reference 4-node star network, as described in 1.2.')
-st.write('The original dataset contains 10,000 observations. As the reference grid is symetric, the dataset can be augmented in 3! (3 factorial) times, or 6 times, representing a permutation of the three consumers occupying three consumer nodes. The augmented version has then 60,000 observations. It also contains 12 primary predictive features and two dependent variables.')
+st.write("This dataset (downloaded from [Kaggle](https://www.kaggle.com/pcbreviglieri/predicting-smart-grid-stability-with-deep-learning/notebook)) is synthetic and is based on simulations of grid stability for a reference 4-node star network. The Kaggle dataset is augmented from the 'Electrical Grid Stability Simulated Dataset', created by Vadim Arzamasov (Karlsruher Institut für Technologie) and is [available on the UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Electrical+Grid+Stability+Simulated+Data).")
+
+st.write("For this project, we have shuffled the rows and here's a fragment of the data which contains predictive features and dependent variables that are further outlined below:")
 
 st.write(data.head())
 
+
 st.subheader('Predictive features:')
-st.write("- 'tau1' to 'tau4': the reaction time of each network participant, a real value within the range 0.5 to 10 ('tau1' corresponds to the supplier node, 'tau2' to 'tau4' to the consumer nodes)")
-st.write("- 'p1' to 'p4': nominal power produced (positive) or consumed (negative) by each network participant, a real value within the range -2.0 to -0.5 for consumers ('p2' to 'p4'). As the total power consumed equals the total power generated, p1 (supplier node) = - (p2 + p3 + p4)")
-st.write("- 'g1' to 'g4': price elasticity coefficient for each network participant, a real value within the range 0.05 to 1.00 ('g1' corresponds to the supplier node, 'g2' to 'g4' to the consumer nodes; 'g' stands for 'gamma')")
+st.write("- 'tau1', 'tau2', 'tau3', 'tau4': reaction time of each network participant, a real value within the range 0.5 to 10 ('tau1' is the supplier node while 'tau2' to 'tau4' are the consumer nodes)")
+st.write("- 'p1', 'p2', 'p3', 'p4': nominal power produced (positive) or consumed (negative) by each network participant, a real value within the range -2.0 to -0.5 for consumers ('p2' to 'p4')")
+st.write("- 'g1', 'g2', 'g3', 'g4': price elasticity coefficient (gamma) for each network participant, a real value within the range 0.05 to 1.00 ('g1' is the supplier node while 'g2' to 'g4' are the consumer nodes)")
 
 st.subheader('Dependent variables:')
 
-st.write("- 'stab': the maximum real part of the characteristic differentia equation root (if positive, the system is linearly unstable; if negative, linearly stable)")
-st.write("- 'stabf': a categorical (binary) label ('stable' or 'unstable').")
+st.write("- 'stab': maximum real part of the characteristic differentia equation root (the system is linearly unstable if positive and linearly stable if negative)")
+st.write("- 'stabf': categorical label ('stable' or 'unstable')")
 
-st.write("As there is a direct relationship between 'stab' and 'stabf' ('stabf' = 'stable' if 'stab' <= 0, 'unstable' otherwise), 'stab' will be dropped and 'stabf' will remain as the sole dependent variable.")
-st.write('As the dataset content comes from simulation exercises, there are no missing values. Also, all features are originally numerical, no feature coding is required. Such dataset properties allow for a direct jump to machine modeling without the need of data preprocessing or feature engineering.')
-
+st.write("The total power consumed equals the total power generated, so p1 (supplier node) = - (p2 + p3 + p4)")
 
 if st.checkbox('Show raw data'):
     st.subheader('Shuffled dataframe')
     st.write(data)
 
+# function to display histogram for each dependent independent varibale pair from data frame
 def assessment(f_data, f_y_feature, f_x_feature, f_index=-1):
-    """
-    Develops and displays a histogram and a scatter plot for a dependent / independent variable pair from
-    a dataframe and, optionally, highlights a specific observation on the plot in a different color (red).
-
-    Also optionally, if an independent feature is not informed, the scatterplot is not displayed.
-
-    Keyword arguments:
-
-    f_data      Tensor containing the dependent / independent variable pair.
-                Pandas dataframe
-    f_y_feature Dependent variable designation.
-                String
-    f_x_feature Independent variable designation.
-                String
-    f_index     If greater or equal to zero, the observation denoted by f_index will be plotted in red.
-                Integer
-    """
     for f_row in f_data:
         if f_index >= 0:
             f_color = np.where(f_data[f_row].index == f_index,'r','g')
@@ -118,24 +101,11 @@ def assessment(f_data, f_y_feature, f_x_feature, f_index=-1):
         f_chart2.set_xlabel(f_x_feature,fontsize=10)
         f_chart2.set_ylabel(f_y_feature,fontsize=10)
 
-    # plt.show()
     st.pyplot(plt)
 
 
+# function for heatmap of correlation of dataframe features
 def correlation_map(f_data, f_feature, f_number):
-    """
-    Develops and displays a heatmap plot referenced to a primary feature of a dataframe, highlighting
-    the correlation among the 'n' mostly correlated features of the dataframe.
-
-    Keyword arguments:
-
-    f_data      Tensor containing all relevant features, including the primary.
-                Pandas dataframe
-    f_feature   The primary feature.
-                String
-    f_number    The number of features most correlated to the primary feature.
-                Integer
-    """
 
     f_most_correlated = f_data.corr().nlargest(f_number,f_feature)[f_feature].index
     f_correlation = f_data[f_most_correlated].corr()
@@ -146,14 +116,14 @@ def correlation_map(f_data, f_feature, f_number):
         f_fig, f_ax = plt.subplots(figsize=(20, 10))
         sns.heatmap(f_correlation, mask=f_mask, vmin=-1, vmax=1, square=True,
                     center=0, annot=True, annot_kws={"size": 8}, cmap="PRGn")
-    # plt.show()
     return plt
 
+# function to plot the split of stable vs unstable in the dataset
 def split_chart(f_data, f_feature):
     ax = f_data[f_feature].value_counts(normalize=True).plot(kind='bar')
     return plt
 
-
+# function to run ML models from button, compiled and trained models are then saved to json and results to csv that can be accessed later :)
 def run_model(X_training, y_training, X_testing, y_testing, selected_model, selected_folds, selected_epochs):
     # ANN initialization
     with st.spinner("Building and evaluating model..."):
@@ -206,12 +176,12 @@ def run_model(X_training, y_training, X_testing, y_testing, selected_model, sele
     # https://machinelearningmastery.com/save-load-keras-deep-learning-models/
     classifier.save(model_string)
 
-
     st.success('Finished building and evaluating model!')
     st.balloons()
 
     view_results(name_string, y_testing, selected_model, selected_folds, selected_epochs)
 
+# function to view results saved off earlier from previous runs
 def view_results(name_string, y_testing, selected_model, selected_folds, selected_epochs):
     # model_string = name_string+".h5"
     # # load model
@@ -231,23 +201,23 @@ def view_results(name_string, y_testing, selected_model, selected_folds, selecte
     st.write('Accuracy per the confusion matrix:')
     st.write(accuracy)
 
-
 st.header('Exploratory Data Analysis')
 
 st.subheader('Unstable vs Stable Split')
 
-st.write(f'Split of "unstable" (0) and "stable" (1) observations in the original dataset:')
+st.write(f'To understand the dataset, we can check the split of "unstable" (0) and "stable" (1) observations:')
 st.write((data['stabf'].value_counts(normalize=True)))
 
 st.pyplot(split_chart(data,'stabf'))
 
 st.subheader('Correlation Map')
-st.write("It is important to verify the correlation between each numerical feature and the dependent variable, as well as correlation among numerical features leading to potential undesired colinearity. The heatmap below provides an overview of correlation between the dependent variable ('stabf') and the 12 numerical features. Note that also the alternative dependent variable ('stab') has been included just to give an idea of how correlated it is with 'stabf'. Such correlation is significant (-0.83), as it should be, which reinforces the decision to drop it, anticipated in Section 3. Also, correlation between 'p1' and its components 'p2', 'p3' and 'p4' is above average, as expected, but not as high to justify any removal.")
+st.write("The correlation heatmap provides an overview of correlation between the dependent variable ('stabf') and the 12 numerical features and is shown below:")
 st.pyplot(correlation_map(data, 'stabf', 14))
 
 st.subheader('Feature Exploration')
 
-st.write("Distribution patterns and the relationship with the 'stab' dependent variable is charted for each of the 12 dataset features. As this data comes from simulations with predetermined fixed ranges for all features, as described in Section 3, distributions are pretty much uniform across the board, with the exception of 'p1' (absolute sum of 'p2', 'p3' and 'p4'), which follows a normal distribution (as expected) with a very small skew factor of -0.013.")
+st.write("To further understand the features, we can plot the distribution patterns and the relationship with the 'stab' dependent variable for each of the 12 dataset features.")
+st.write("Since this data comes from simulations with predetermined fixed ranges for all features, distributions are pretty much uniform. The only exception is 'p1', which is the  sum of 'p2', 'p3' and 'p4', and follows a normal distribution (with a small skew factor of -0.013)")
 selected_feature = st.radio(
      "Select dataset feature to view distribution chart and relationship with the 'stab' dependent variable.",
      data.columns)
@@ -278,10 +248,8 @@ ratio_testing = y_testing['stabf'].value_counts(normalize=True)
 st.header('Building and Training Deep Learning Model')
 
 st.subheader('Splitting Data into Test/Train and Feature Scaling')
-st.write("As anticipated, the features dataset will contain all 12 original predictive features, while the label dataset will contain only 'stabf' ('stab' is dropped here).")
-st.write("In addition, as the dataset has already been shuffled, the training set will receive the first 54,000 observations, while the testing set will accommodate the last 6,000.")
-st.write("Even considering that the dataset is large enough and well behaved, the percentage of 'stable' and 'unstable' observations is computed for both training and testing sets, just to make sure that the original dataset distribution is maintained after the split - which proved to be the case.")
-st.write("After splitting, Pandas dataframes and series are transformed into Numpy arrays for the remainder of the exercise.")
+st.write("The features dataset will contain the 12 predictive features, and the label dataset will only containe the'stabf' classification labels. The training portion will contain the first (shuffled) 54,000 observations, while the testing portion will consist of the last (shuffled) 6,000.")
+st.write("The percentage of 'stable' and 'unstable' observations is computed to show approximate equivalence to the original dataset distribution:")
 
 splitcol1, splitcol2 = st.columns(2)
 
@@ -293,7 +261,7 @@ with splitcol2:
     st.write('Composition of Test Data')
     st.write(ratio_testing)
 
-st.write("In preparation for machine learning, scaling is performed based on (fitted to) the training set and applied (with the 'transform' method) to both training and testing sets.")
+st.write("Finally, in preparation for inputting to the machine learning model, scaling is performed based on the training set and applied with the 'transform' method to both thr training and testing sets.")
 
 X_training = X_training.values
 y_training = y_training.values
@@ -304,6 +272,19 @@ y_testing = y_testing.values
 scaler = StandardScaler()
 X_training = scaler.fit_transform(X_training)
 X_testing = scaler.transform(X_testing)
+
+st.subheader('Design of Deep Learning Model')
+
+st.write("For this application, we have two artificial neural network (ANN) architectures depicted and evaluated with the following structure:")
+st.write("- one input layer (12 input nodes)")
+st.write("- two or three hidden layers (24-12 or 24-24-12 nodes)")
+st.write("- one single-node output layer")
+
+st.write("These architectures can be summarized as follows:")
+st.write("- 24-12-1")
+st.write("- 24-24-12-1")
+
+st.write("'relu' was chosen as the activation function for hidden layers and 'sigmoid' was the activation function for the output layers. Model compilation was performed with with 'adam' as optimizer and 'binary_crossentropy' as the loss function. Fitting performance is assessed with the 'accuracy' metric.")
 
 
 st.subheader('Configure Deep Learning Model')
@@ -364,3 +345,5 @@ ax.set_ylim(top=110)
 fig.tight_layout()
 
 st.pyplot(plt)
+
+st.write("Overall, we can see that deep learning is valuable in predicting the stability of the simulated grid based on this exercise. For this case, we can see that the best performance based on accuracy was with the more complex model architecture, 10 folds, and 30 epochs.")

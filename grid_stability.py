@@ -18,16 +18,16 @@ from keras.layers import Dense
 
 from datetime import datetime
 
-st.set_page_config(page_title="Predicting Grid Stability with Deep Learning", page_icon=":zap:", layout="centered", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title="predicting grid stability", page_icon=":zap:", layout="centered", initial_sidebar_state="auto", menu_items=None)
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;justify-content: center;} </style>', unsafe_allow_html=True)
 
 st.sidebar.title('Predicting Grid Stability with Deep Learning')
+st.sidebar.image("img/logo.png", use_column_width='auto')
+st.sidebar.write("In this exercise, I have adapted Paolo's work into this streamlit app to allow for more model interactivity and testing.")
 st.sidebar.write("Source: [Paolo Breviglieri](https://www.kaggle.com/pcbreviglieri/predicting-smart-grid-stability-with-deep-learning/notebook)")
 
-st.sidebar.write("In this exercise, I have adapted Paolo's work into this streamlit app to allow for more model interactivity and testing.")
-
-st.sidebar.header('Problem Statement')
-st.sidebar.write('(explain what the project is about)')
+# st.sidebar.header('Problem Statement')
+# st.sidebar.write('(explain what the project is about)')
 
 DATE_COLUMN = 'date/time'
 DATA_URL = ('smart_grid_stability_augmented.csv')
@@ -49,6 +49,33 @@ def load_data():
 
     return data, X_training, y_training, X_testing, y_testing
 
+st.header('Background')
+st.subheader('Integrating Renewable Energy into the Electric Grid')
+
+st.write("As renewable energy sources are increasingly adopted, an infrastructure of new paradigms is necessary taking into account more production sources and management of a much more flexible and complex system to connect producers, conumers, and distribution.")
+st.write("Traditional operating ecosystems previously involved fewer energy sources that supply energy to consumers over unidirectional flows. However, with more renewable options, the end users now can consume energy and also have the ability to produce and supply it, yielding the new classification of 'prosumers'. Now, the energy flow within distribution grids, or 'smart grids' is bidirectional.")
+st.write("This increased flexibility due to renewable sources and 'prosumers' has led to the management of supply and demand to be far more complex and challenging, leading to many studies looking into methods of predicting and managing smart grid stability.")
+
+st.subheader('Modelling Grid Stability')
+
+st.write("In a smart grid, consumer demand information is evaluated against the current supply conditions and the resulting price information is sent back to customers for them to decide about usage. This is highly time-dependent, so dynamically estimating grid stability is essential to the process.")
+st.write("Overall, it is important to understand and plan energy production and consumption disturbances and fluctuations introduced by system participants in a dynamic way. This would need to consider technical aspects and how participants respond to changes in the price of energy.")
+st.write("One approach that researchers have developed is that of Decentral Smart Grid Control (DSGC) systems. This methodology is based on monitoring the frequency of the grid. 'Frequency' refers to the alternate current (AC) frequency, measured in Hertz (Hz). Typically, a standard AC frequency of 50 or 60 Hz is utilized in electric power generation-distribution systems.")
+st.write("Electrical signal frequency is known to increase in times of excess generation and decreases in times of underproduction.  Based on this, measurements of grid frequency for each customer would provide the required information about the current network power balance, to price the energy and inform consumers.")
+st.write("The DSGC differential equation-based mathematical model identifies grid instability for a reference 4-node star architecture, with one power source (a centralized generation node) supplying energy to three consumption nodes. The model considers inputs (features) related to:")
+
+st.write("- the total power balance (nominal power produced or consumed at each grid node)")
+st.write("- the response time of participants to adjust consumption and/or production in response to price changes (referred to as reaction time)")
+st.write("- energy price elasticity")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.image("img/node-diagram.png", caption='4-Node Star Diagram showing generation node that serves as the energy source and three consumption nodes.', width='None', use_column_width='auto')
+with col2:
+    st.image("img/logo.png", caption='4-Node Star with producer and consumers represented.', width='None', use_column_width='auto')
+
+
 st.header('Dataset')
 data_load_state = st.text('Loading data...')
 data, X_training, y_training, X_testing, y_testing = load_data()
@@ -68,7 +95,7 @@ st.write("- 'g1', 'g2', 'g3', 'g4': price elasticity coefficient (gamma) for eac
 
 st.subheader('Dependent variables:')
 
-st.write("- 'stab': maximum real part of the characteristic differentia equation root (the system is linearly unstable if positive and linearly stable if negative)")
+st.write("- 'stab': maximum real part of the characteristic differential equation root (the system is linearly unstable if positive and linearly stable if negative)")
 st.write("- 'stabf': categorical label ('stable' or 'unstable')")
 
 st.write("The total power consumed equals the total power generated, so p1 (supplier node) = - (p2 + p3 + p4)")
@@ -285,6 +312,8 @@ st.write("- 24-12-1")
 st.write("- 24-24-12-1")
 
 st.write("'relu' was chosen as the activation function for hidden layers and 'sigmoid' was the activation function for the output layers. Model compilation was performed with with 'adam' as optimizer and 'binary_crossentropy' as the loss function. Fitting performance is assessed with the 'accuracy' metric.")
+
+st.image("img/ann.png", caption='Diagram of 24-24-12-1 Artificial Neural Network (ANN) architecture', width='None', use_column_width='auto')
 
 
 st.subheader('Configure Deep Learning Model')

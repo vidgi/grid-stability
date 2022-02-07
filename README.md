@@ -9,7 +9,7 @@ Traditional operating ecosystems previously involved fewer energy sources that s
 
 This increased flexibility due to renewable sources and 'prosumers' has led to the management of supply and demand to be far more complex and challenging, leading to many studies looking into methods of predicting and managing smart grid stability.
 
-In this project, several prediction models are trained and compared in order to detect if the grid is stable/unstable.
+In this project, several prediction models are trained via ANN and compared in order to detect if the grid is stable/unstable.
 
 [view project](https://share.streamlit.io/vidgi/grid-stability/grid_stability.py)
 
